@@ -70,3 +70,25 @@ function convertToTensor(data) {
         }
     })
 }
+
+async function trainModel(model, inputs, labels) {
+    model.compile({
+        optimizer: tf.train.adam(),
+        loss: tf.losses.meanSquaredError,
+        metrics: ["mse"]
+    });
+
+    const batchSize = 32;
+    const epochs = 50;
+
+    return await model.fit(inputs, labels, {
+        batchSize,
+        epochs,
+        shuffle: true,
+        callback: tfvis.show.fitCallBacks(
+            { name: "Training Performance" },
+            ["loss", "mse"],
+            { height: 200, callbacks: ["onEpochEnd"] }
+        )
+    })
+}
