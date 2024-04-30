@@ -1,4 +1,4 @@
-async function getData () {
+async function getData() {
     const carsDataResponse = await fetch('https://storage.googleapis.com/tfjs-tutorials/carsData.json');
     const carsData = await carsDataResponse.json();
     const cleaned = carsData.map(car => ({
@@ -28,4 +28,16 @@ async function run() {
     )
 }
 
-document.addEventListener("DOMContentLoaded", run)
+// document.addEventListener("DOMContentLoaded", run)
+
+function createModel() {
+    const model = tf.sequential();
+
+    model.add(tf.layers.dense({inputShape: [1], units: 1, useBias: true}));
+    model.add(tf.layers.dense({units: 1, useBias: true}));
+
+    return model
+}
+
+const model = createModel()
+tfvis.show.modelSummary({name: 'Model Summary'}, model)
