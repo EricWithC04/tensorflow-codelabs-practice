@@ -10,4 +10,22 @@ async function getData () {
     return cleaned
 }
 
-console.log(getData());
+async function run() {
+    const data = await getData();
+    const values = data.map(d => ({
+        x: d.horsepower,
+        y: d.mpg
+    }))
+
+    tfvis.render.scatterplot(
+        {name: "Horsepower v MPG"},
+        {values},
+        {
+            xLabel: "Horsepower",
+            yLabel: "MPG",
+            height: 300
+        }
+    )
+}
+
+document.addEventListener("DOMContentLoaded", run)
