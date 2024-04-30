@@ -10,32 +10,12 @@ async function getData() {
     return cleaned
 }
 
-async function run() {
-    const data = await getData();
-    const values = data.map(d => ({
-        x: d.horsepower,
-        y: d.mpg
-    }))
-
-    tfvis.render.scatterplot(
-        {name: "Horsepower v MPG"},
-        {values},
-        {
-            xLabel: "Horsepower",
-            yLabel: "MPG",
-            height: 300
-        }
-    )
-}
-
-// document.addEventListener("DOMContentLoaded", run)
-
 function createModel() {
     const model = tf.sequential();
-
+    
     model.add(tf.layers.dense({inputShape: [1], units: 1, useBias: true}));
     model.add(tf.layers.dense({units: 1, useBias: true}));
-
+    
     return model
 }
 
@@ -43,23 +23,23 @@ const model = createModel()
 tfvis.show.modelSummary({name: 'Model Summary'}, model)
 
 function convertToTensor(data) {
-    return tf.tify(() => {
+    return tf.tidy(() => {
         tf.util.shuffle(data);
-
+        
         const inputs = data.map(d => d.horsepower)
         const labels = data.map(d => d.mpg)
-
+        
         const inputTensor = tf.tensor2d(inputs, [inputs.length, 1]);
         const labelTensor = tf.tensor2d(labels, [labels.length, 1]);
-
+        
         const inputMax = inputTensor.max();
         const inputMin = inputTensor.min();
         const labelMax = labelTensor.max();
         const labelMin = labelTensor.min();
-
+        
         const normalizedInputs = inputTensor.sub(inputMin).div(inputMax.sub(inputMin));
         const normalizedLabels = labelTensor.sub(labelMin).div(labelMax.sub(labelMin));
-
+        
         return {
             inputs: normalizedInputs,
             labels: normalizedLabels,
@@ -77,18 +57,44 @@ async function trainModel(model, inputs, labels) {
         loss: tf.losses.meanSquaredError,
         metrics: ["mse"]
     });
-
+    
     const batchSize = 32;
     const epochs = 50;
-
+    
     return await model.fit(inputs, labels, {
         batchSize,
         epochs,
         shuffle: true,
-        callback: tfvis.show.fitCallBacks(
+        callbacks: tfvis.show.fitCallbacks(
             { name: "Training Performance" },
             ["loss", "mse"],
             { height: 200, callbacks: ["onEpochEnd"] }
         )
     })
 }
+
+async function run() {
+    const data = await getData();
+    const values = data.map(d => ({
+        x: d.horsepower,
+        y: d.mpg
+    }))
+
+    tfvis.render.scatterplot(
+        {name: "Horsepower v MPG"},
+        {values},
+        {
+            xLabel: "Horsepower",
+            yLabel: "MPG",
+            height: 300
+        }
+    )
+
+    const tensorData = convertToTensor(data);
+    const {inputs, labels} = tensorData;
+
+    await trainModel(model, inputs, labels);
+    console.log('Done Training');
+}
+
+document.addEventListener("DOMContentLoaded", run)
